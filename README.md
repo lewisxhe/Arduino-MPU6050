@@ -9,6 +9,14 @@ Tutorials: http://www.jarzebski.pl/arduino/czujniki-i-sensory/3-osiowy-zyroskop-
 
 This library use I2C to communicate, 2 pins are required to interface
 
+
+July 24, 2020
+
+- Add callback method to read sensor data
+- Modify the directory structure
+
+
+
 I need your help
 ----------------
 

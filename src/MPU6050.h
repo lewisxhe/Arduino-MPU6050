@@ -16,6 +16,8 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+* Last change:  July 27, 2020 by Lewis He
 */
 
 #ifndef MPU6050_h
