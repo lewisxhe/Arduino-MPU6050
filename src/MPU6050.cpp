@@ -29,12 +29,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <Wire.h>
 #include <math.h>
 
-#include <MPU6050.h>
+#include "MPU6050.h"
 
 bool MPU6050::begin(imu_com_fptr_t read_callblack, imu_com_fptr_t write_callblack, mpu6050_dps_t scale, mpu6050_range_t range, int mpua)
 {
     // Set Address
     mpuAddress = mpua;
+    if (read_callblack == nullptr || write_callblack == nullptr) {
+        return false;
+    }
 
     __read = read_callblack;
     __write = write_callblack;
@@ -642,7 +645,6 @@ uint8_t MPU6050::fastRegister8(uint8_t reg)
 #else
     value = Wire.receive();
 #endif;
-    Wire.endTransmission();
 #else
     __read(mpuAddress, reg, &value, 1);
 #endif
@@ -669,7 +671,6 @@ uint8_t MPU6050::readRegister8(uint8_t reg)
 #else
     value = Wire.receive();
 #endif;
-    Wire.endTransmission();
 #else
     __read(mpuAddress, reg, &value, 1);
 #endif
@@ -697,7 +698,7 @@ void MPU6050::writeRegister8(uint8_t reg, uint8_t value)
 
 int16_t MPU6050::readRegister16(uint8_t reg)
 {
-    int16_t value;
+    int16_t value ;
 #ifdef DISABLE_I2C_CALLBLACK
     Wire.beginTransmission(mpuAddress);
 #if ARDUINO >= 100
@@ -716,10 +717,11 @@ int16_t MPU6050::readRegister16(uint8_t reg)
     uint8_t vha = Wire.receive();
     uint8_t vla = Wire.receive();
 #endif;
-    Wire.endTransmission();
     value = vha << 8 | vla;
 #else
-    __read(mpuAddress, reg, (uint8_t *)&value, 2);
+    uint8_t data[2] = {0};
+    __read(mpuAddress, reg, data, 2);
+    value = data[0] << 8 | data[1];
 #endif
     return value;
 }

@@ -1,5 +1,5 @@
 /*
-    MPU6050 Triple Axis Gyroscope & Accelerometer. Simple Accelerometer Example.
+    MPU6050 Triple Axis Gyroscope & Accelerometer. Simple Gyroscope Example.
     Read more: http://www.jarzebski.pl/arduino/czujniki-i-sensory/3-osiowy-zyroskop-i-akcelerometr-mpu6050.html
     GIT: https://github.com/jarzebski/Arduino-MPU6050
     Web: http://www.jarzebski.pl
@@ -11,16 +11,45 @@
 
 MPU6050 mpu;
 
+void setup() 
+{
+  Serial.begin(115200);
+
+  // Initialize MPU6050
+  Serial.println("Initialize MPU6050");
+  while(!mpu.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_2G))
+  {
+    Serial.println("Could not find a valid MPU6050 sensor, check wiring!");
+    delay(500);
+  }
+  
+  // If you want, you can set gyroscope offsets
+  // mpu.setGyroOffsetX(155);
+  // mpu.setGyroOffsetY(15);
+  // mpu.setGyroOffsetZ(15);
+  
+  // Calibrate gyroscope. The calibration must be at rest.
+  // If you don't want calibrate, comment this line.
+  mpu.calibrateGyro();
+
+  // Set threshold sensivty. Default 3.
+  // If you don't want use threshold, comment this line or set 0.
+  mpu.setThreshold(3);
+  
+  // Check settings
+  checkSettings();
+}
 
 void checkSettings()
 {
-    Serial.println();
-
-    Serial.print(" * Sleep Mode:            ");
-    Serial.println(mpu.getSleepEnabled() ? "Enabled" : "Disabled");
-
-    Serial.print(" * Clock Source:          ");
-    switch (mpu.getClockSource()) {
+  Serial.println();
+  
+  Serial.print(" * Sleep Mode:        ");
+  Serial.println(mpu.getSleepEnabled() ? "Enabled" : "Disabled");
+  
+  Serial.print(" * Clock Source:      ");
+  switch(mpu.getClockSource())
+  {
     case MPU6050_CLOCK_KEEP_RESET:     Serial.println("Stops the clock and keeps the timing generator in reset"); break;
     case MPU6050_CLOCK_EXTERNAL_19MHZ: Serial.println("PLL with external 19.2MHz reference"); break;
     case MPU6050_CLOCK_EXTERNAL_32KHZ: Serial.println("PLL with external 32.768kHz reference"); break;
@@ -28,96 +57,47 @@ void checkSettings()
     case MPU6050_CLOCK_PLL_YGYRO:      Serial.println("PLL with Y axis gyroscope reference"); break;
     case MPU6050_CLOCK_PLL_XGYRO:      Serial.println("PLL with X axis gyroscope reference"); break;
     case MPU6050_CLOCK_INTERNAL_8MHZ:  Serial.println("Internal 8MHz oscillator"); break;
-    }
-
-    Serial.print(" * Accelerometer:         ");
-    switch (mpu.getRange()) {
-    case MPU6050_RANGE_16G:            Serial.println("+/- 16 g"); break;
-    case MPU6050_RANGE_8G:             Serial.println("+/- 8 g"); break;
-    case MPU6050_RANGE_4G:             Serial.println("+/- 4 g"); break;
-    case MPU6050_RANGE_2G:             Serial.println("+/- 2 g"); break;
-    }
-
-    Serial.print(" * Accelerometer offsets: ");
-    Serial.print(mpu.getAccelOffsetX());
-    Serial.print(" / ");
-    Serial.print(mpu.getAccelOffsetY());
-    Serial.print(" / ");
-    Serial.println(mpu.getAccelOffsetZ());
-
-    Serial.println();
-}
-
-uint8_t readFormIIC(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint8_t len)
-{
-    Wire.beginTransmission(dev_addr);
-    Wire.write(reg_addr);
-    Wire.endTransmission(false);
-    uint8_t cnt = Wire.requestFrom(dev_addr, (uint8_t)len, (uint8_t)1);
-    if (!cnt) {
-        return 0;
-    }
-    uint16_t index = 0;
-    while (Wire.available()) {
-        if (index > len) {
-            return 0;
-        }
-        data[index++] = Wire.read();
-    }
-    return cnt;
-}
-
-uint8_t writeFormIIC(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint8_t len)
-{
-    Wire.beginTransmission(dev_addr);
-    Wire.write(reg_addr);
-    for (uint16_t i = 0; i < len; i++) {
-        Wire.write(data[i]);
-    }
-    return 0 !=  Wire.endTransmission();
-}
-
-void setup()
-{
-    Serial.begin(115200);
-
-    Serial.println("Initialize MPU6050");
-
-    Wire.begin(21, 22);
-
-    while (!mpu.begin(readFormIIC, writeFormIIC, MPU6050_SCALE_2000DPS, MPU6050_RANGE_2G)) {
-        Serial.println("Could not find a valid MPU6050 sensor, check wiring!");
-        delay(500);
-    }
-
-    // If you want, you can set accelerometer offsets
-    // mpu.setAccelOffsetX();
-    // mpu.setAccelOffsetY();
-    // mpu.setAccelOffsetZ();
-
-    checkSettings();
+  }
+  
+  Serial.print(" * Gyroscope:         ");
+  switch(mpu.getScale())
+  {
+    case MPU6050_SCALE_2000DPS:        Serial.println("2000 dps"); break;
+    case MPU6050_SCALE_1000DPS:        Serial.println("1000 dps"); break;
+    case MPU6050_SCALE_500DPS:         Serial.println("500 dps"); break;
+    case MPU6050_SCALE_250DPS:         Serial.println("250 dps"); break;
+  } 
+  
+  Serial.print(" * Gyroscope offsets: ");
+  Serial.print(mpu.getGyroOffsetX());
+  Serial.print(" / ");
+  Serial.print(mpu.getGyroOffsetY());
+  Serial.print(" / ");
+  Serial.println(mpu.getGyroOffsetZ());
+  
+  Serial.println();
 }
 
 void loop()
 {
-    Vector rawAccel = mpu.readRawAccel();
-    Vector normAccel = mpu.readNormalizeAccel();
+  Vector rawGyro = mpu.readRawGyro();
+  Vector normGyro = mpu.readNormalizeGyro();
 
-    Serial.print(" Xraw = ");
-    Serial.print(rawAccel.XAxis);
-    Serial.print(" Yraw = ");
-    Serial.print(rawAccel.YAxis);
-    Serial.print(" Zraw = ");
-    Serial.print(rawAccel.ZAxis);
+  Serial.print(" Xraw = ");
+  Serial.print(rawGyro.XAxis);
+  Serial.print(" Yraw = ");
+  Serial.print(rawGyro.YAxis);
+  Serial.print(" Zraw = ");
+  Serial.println(rawGyro.ZAxis);
 
-    Serial.print("  Xnorm = ");
-    Serial.print(normAccel.XAxis);
-    Serial.print(" Ynorm = ");
-    Serial.print(normAccel.YAxis);
-    Serial.print(" Znorm = ");
-    Serial.println(normAccel.ZAxis);
-
-    delay(200);
+  Serial.print(" Xnorm = ");
+  Serial.print(normGyro.XAxis);
+  Serial.print(" Ynorm = ");
+  Serial.print(normGyro.YAxis);
+  Serial.print(" Znorm = ");
+  Serial.println(normGyro.ZAxis);
+  
+  delay(10);
 }
 
 
